@@ -19,10 +19,12 @@ import { Grid, Cell } from "baseui/layout-grid";
 import { Tabs, Tab } from "baseui/tabs";
 
 import { Button } from "baseui/button";
+import { Input } from "baseui/input";
 import { Upload } from "baseui/icon";
 
 import SubmissionTable from "./SubmissionTable";
 import Markdown from 'react-markdown';
+
 
 
 import {
@@ -52,31 +54,24 @@ const itemProps = {
   justifyContent: "center",
 };
 
-function App() {
-  const [code, setCode] = React.useState(
-    `def twoSum(self, nums: List[int], target: int) -> List[int]:`
-  );
+function MainApp({ userName }) {
+  const [code, setCode] = React.useState(``);
   const [activeKey, setActiveKey] = React.useState("0");
   const [problem, setProblem] = React.useState(null);
 
   const getProblem = async () => {
     try {
-      const params = new URLSearchParams({
-        q_id: 1
-      });
-
+      const params = new URLSearchParams({ q_id: 1 });
       const response = await fetch(`http://ardagurcan.com:5000/problem?${params}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        }
+        method: "GET",
+        headers: { "Content-Type": "application/json" }
       });
       const data = await response.json();
-      console.log('Response from backend:', data);
+      console.log("Response from backend:", data);
       setProblem(data);
-      if (data.code) setCode(data.code); // Set initial code if received
+      if (data.code) setCode(data.code);
     } catch (error) {
-      console.error('Error fetching problem from backend:', error);
+      console.error("Error fetching problem from backend:", error);
     }
   };
 
@@ -90,24 +85,21 @@ function App() {
         q_id: 1,
         code: encodeURIComponent(code),
         f_name: encodeURIComponent("twoSum"),
+        username: encodeURIComponent(userName),
       });
 
       const response = await fetch(`http://ardagurcan.com:5000/check?${params}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        }
+        method: "POST",
+        headers: { "Content-Type": "application/json" }
       });
       const data = await response.json();
-      console.log('Response from backend:', data);
+      console.log("Response from backend:", data);
     } catch (error) {
-      console.error('Error sending code to backend:', error);
+      console.error("Error sending code to backend:", error);
     }
   };
 
   return (
-    <StyletronProvider value={engine}>
-      <BaseProvider theme={LightTheme}>
         <Outer>
           <Grid>
             <Cell span={4}>
@@ -146,10 +138,7 @@ function App() {
             <Cell span={4}>
               <Inner>
                 <Card>
-                  <Tabs
-                    onChange={({ activeKey }) => setActiveKey(activeKey)}
-                    activeKey={activeKey}
-                  >
+                  <Tabs onChange={({ activeKey }) => setActiveKey(activeKey)} activeKey={activeKey}>
                     <Tab title="Submission">
                       <SubmissionTable />
                     </Tab>
@@ -160,6 +149,60 @@ function App() {
             </Cell>
           </Grid>
         </Outer>
+  );
+}
+
+function Login({ onLogin }) {
+  const [name, setName] = React.useState("");
+  const [css] = useStyletron();
+
+  return (
+    // Remove the providers from here
+    <div
+      className={css({
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100vh",
+      })}
+    >
+      <Card
+        overrides={{
+          Root: {
+            style: {
+              width: "400px",
+              padding: "2rem",
+              textAlign: "center",
+            },
+          },
+        }}
+      >
+        <HeadingSmall>Enter your name to continue</HeadingSmall>
+        <Input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Your Name"
+          overrides={{
+            Root: { style: { marginTop: "1rem", marginBottom: "1rem" } },
+          }}
+        />
+        <Button onClick={() => onLogin(name)} disabled={!name}>
+          Continue
+        </Button>
+      </Card>
+    </div>
+  );
+}
+
+
+function App() {
+  const [userName, setUserName] = React.useState(null);
+
+  return (
+    // Move the providers here
+    <StyletronProvider value={engine}>
+      <BaseProvider theme={LightTheme}>
+        {userName ? <MainApp userName={userName} /> : <Login onLogin={setUserName} />}
       </BaseProvider>
     </StyletronProvider>
   );
