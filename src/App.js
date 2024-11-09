@@ -47,16 +47,29 @@ const itemProps = {
   justifyContent: "center",
 };
 
-function MainApp({ userName }) {
+const Centered = styled("div", {
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  height: "100%",
+});
+
+function MainApp({ userName, t }) {
   const [code, setCode] = React.useState(``);
   const [activeKey, setActiveKey] = React.useState("0");
   const [activeTest, setActiveTest] = React.useState("0");
+  const [timer, setTimer] = React.useState(t);
 
   const [DATA, setData] = useState([]);
 
   function addItem(newItem) {
     setData((prevData) => [...prevData, newItem]);
   }
+
+  // decrement the timer every second
+  const intervalId = setInterval(() => {
+    setTimer((prev) => prev - 1);
+  }, 1000);
 
   const [problem, setProblem] = React.useState(null);
 
@@ -82,7 +95,6 @@ function MainApp({ userName }) {
   React.useEffect(() => {
     getProblem();
   }, []);
-
   // Add refreshTrigger state
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
@@ -95,10 +107,13 @@ function MainApp({ userName }) {
         username: encodeURIComponent(userName),
       });
 
-      const response = await fetch(`http://ardagurcan.com:5000/check?${params}`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
+      const response = await fetch(
+        `http://ardagurcan.com:5000/check?${params}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
       const data = await response.json();
       console.log("Response from backend:", data);
       addItem(data);
@@ -112,69 +127,67 @@ function MainApp({ userName }) {
 
   return (
     <>
-    <HeadingLevel
-    >
-      <Heading>Time: {timer}</Heading>
-    </HeadingLevel>
-    <Outer>
-      <Grid>
-        <Cell span={4}>
-          <Inner>
-            <Card>
-              <div>
-                {problem ? (
-                  <Markdown>{problem.problem}</Markdown>
-                ) : (
-                  <ParagraphSmall>Loading problem...</ParagraphSmall>
-                )}
-              </div>
-            </Card>
-          </Inner>
-        </Cell>
-        <Cell span={8}>
-          <Inner>
-            <Card>
-              <Editor
-                value={code}
-                onValueChange={(code) => setCode(code)}
-                highlight={(code) => highlight(code, languages.python)}
-                onFocus={(e) => e.target.style.outline = 'none'} // Remove outline on focus
-                padding={10}
-                style={{
-                  fontFamily: '"Fira code", "Fira Mono", monospace',
-                  fontSize: 12,
-                  height: "400px",
-                }}
-              />
-              <Button
-                onClick={submitCode}
-                endEnhancer={() => <Upload size={24} title="" />}
-              >
-                Submit
-              </Button>
-            </Card>
-            <Card>
-              <Tabs
-                onChange={({ activeKey }) => {
-                  setActiveKey(activeKey);
-                }}
-                activeKey={activeKey}
-              >
-                <Tab title="Submission">
-                  <SubmissionTable data={DATA}></SubmissionTable>
-                </Tab>
-                <Tab title="Leaderboard">
-                  <Leaderboard refreshTrigger={refreshTrigger} />
-                </Tab>
-                
-                  
-               
-              </Tabs>
-            </Card>
-          </Inner>
-        </Cell>
-      </Grid>
-    </Outer>
+     <Centered>
+        <HeadingLevel>
+          <HeadingSmall>Time: {timer}</HeadingSmall>
+        </HeadingLevel>
+      </Centered>
+      <Outer>
+        <Grid>
+          <Cell span={4}>
+            <Inner>
+              <Card>
+                <div>
+                  {problem ? (
+                    <Markdown>{problem.problem}</Markdown>
+                  ) : (
+                    <ParagraphSmall>Loading problem...</ParagraphSmall>
+                  )}
+                </div>
+              </Card>
+            </Inner>
+          </Cell>
+          <Cell span={8}>
+            <Inner>
+              <Card>
+                <Editor
+                  value={code}
+                  onValueChange={(code) => setCode(code)}
+                  highlight={(code) => highlight(code, languages.python)}
+                  onFocus={(e) => (e.target.style.outline = "none")} // Remove outline on focus
+                  padding={10}
+                  style={{
+                    fontFamily: '"Fira code", "Fira Mono", monospace',
+                    fontSize: 12,
+                    height: "400px",
+                  }}
+                />
+                <Button
+                  onClick={submitCode}
+                  endEnhancer={() => <Upload size={24} title="" />}
+                >
+                  Submit
+                </Button>
+              </Card>
+              <Card>
+                <Tabs
+                  onChange={({ activeKey }) => {
+                    setActiveKey(activeKey);
+                  }}
+                  activeKey={activeKey}
+                >
+                  <Tab title="Submission">
+                    <SubmissionTable data={DATA}></SubmissionTable>
+                  </Tab>
+                  <Tab title="Leaderboard">
+                    <Leaderboard refreshTrigger={refreshTrigger} />
+                  </Tab>
+                </Tabs>
+              </Card>
+            </Inner>
+          </Cell>
+        </Grid>
+      </Outer>
     </>
   );
 }
@@ -223,21 +236,19 @@ function Login({ onLogin }) {
 
 function App() {
   const [userName, setUserName] = React.useState(null);
-  const [timer, setTimer] = React.useState(0);
+  const [timer, setTimer] = React.useState(20);
 
   // fn to set username and timer
   const handleLogin = async (name) => {
     setUserName(name);
     // Call the backend to get the timer
     try {
-      const response = await fetch(`http://ardagurcan.com:5000/session?username=${name}`);
+      const response = await fetch(
+        `http://ardagurcan.com:5000/session?username=${name}`
+      );
       const data = await response.json();
       console.log("Response from backend:", data);
       setTimer(data.timer);
-      // decrement the timer every second
-      const intervalId = setInterval(() => {
-        setTimer((prev) => prev - 1);
-      }, 1000);
     } catch (error) {
       console.error("Error fetching timer from backend:", error);
     }
@@ -247,7 +258,11 @@ function App() {
     // Move the providers here
     <StyletronProvider value={engine}>
       <BaseProvider theme={LightTheme}>
-        {userName ? <MainApp userName={userName} /> : <Login onLogin={handleLogin} />}
+        {userName ? (
+          <MainApp t={timer} userName={userName} />
+        ) : (
+          <Login onLogin={handleLogin} />
+        )}
       </BaseProvider>
     </StyletronProvider>
   );
