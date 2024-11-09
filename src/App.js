@@ -11,7 +11,7 @@ import { Provider as StyletronProvider } from "styletron-react";
 import { LightTheme, BaseProvider, styled } from "baseui";
 
 import { HeadingSmall, LabelMedium, MonoLabelXSmall, MonoParagraphSmall, ParagraphSmall } from "baseui/typography";
-import { Heading, HeadingLevel, HeadingXSmall} from "baseui/heading";
+import { Heading, HeadingLevel, HeadingXSmall } from "baseui/heading";
 
 import { useStyletron } from "baseui";
 import { Grid, Cell } from "baseui/layout-grid";
@@ -21,8 +21,9 @@ import { Tabs, Tab } from "baseui/tabs";
 import { Button } from "baseui/button";
 import { Upload } from "baseui/icon";
 
-import TwoSum from "./TwoSum";
 import SubmissionTable from "./SubmissionTable";
+import Markdown from 'react-markdown';
+
 
 import {
   Card,
@@ -56,14 +57,32 @@ function App() {
     `def twoSum(self, nums: List[int], target: int) -> List[int]:`
   );
   const [activeKey, setActiveKey] = React.useState("0");
+  const [problem, setProblem] = React.useState(null);
 
-  const DATA = [
-    ["Accepted", 11],
-    ["Accepted", 5],
-    ["Compile Error", 30],
-  ];
-  
-  const COLUMNS = ["Status", "Runtime"];
+  const getProblem = async () => {
+    try {
+      const params = new URLSearchParams({
+        q_id: 1
+      });
+
+      const response = await fetch(`http://ardagurcan.com:5000/problem?${params}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      const data = await response.json();
+      console.log('Response from backend:', data);
+      setProblem(data);
+      if (data.code) setCode(data.code); // Set initial code if received
+    } catch (error) {
+      console.error('Error fetching problem from backend:', error);
+    }
+  };
+
+  React.useEffect(() => {
+    getProblem();
+  }, []);
 
   const submitCode = async () => {
     try {
@@ -71,7 +90,7 @@ function App() {
         q_id: 1,
         code: encodeURIComponent(code),
         f_name: encodeURIComponent("twoSum"),
-      })
+      });
 
       const response = await fetch(`http://ardagurcan.com:5000/check?${params}`, {
         method: 'POST',
@@ -79,7 +98,7 @@ function App() {
           'Content-Type': 'application/json',
         }
       });
-      const data = await response.json()
+      const data = await response.json();
       console.log('Response from backend:', data);
     } catch (error) {
       console.error('Error sending code to backend:', error);
@@ -89,52 +108,53 @@ function App() {
   return (
     <StyletronProvider value={engine}>
       <BaseProvider theme={LightTheme}>
-
         <Outer>
           <Grid>
             <Cell span={4}>
               <Inner>
                 <Card>
-                <TwoSum />
+                  <div>
+                    {problem ? (
+                      <Markdown>{problem.problem}</Markdown>
+                    ) : (
+                      <ParagraphSmall>Loading problem...</ParagraphSmall>
+                    )}
+                  </div>
                 </Card>
               </Inner>
             </Cell>
             <Cell span={4}>
               <Inner>
                 <Card>
-                <Editor
-                  value={code}
-                  onValueChange={(code) => setCode(code)}
-                  highlight={(code) => highlight(code, languages.python)}
-                  padding={10}
-                  onFocus={(e) => e.target.style.outline = 'none'} // Remove outline on focus
-                  style={{
-                    fontFamily: '"Fira code", "Fira Mono", monospace',
-                    fontSize: 12,
-                    //width: '600px',  // Set the desired width
-                    height: "400px", // Set the desired height
-                  }}
-                />
-                <Button onClick={submitCode} endEnhancer={() => <Upload size={24} title="" />}>
-                  Submit
-                </Button>
+                  <Editor
+                    value={code}
+                    onValueChange={(code) => setCode(code)}
+                    highlight={(code) => highlight(code, languages.python)}
+                    padding={10}
+                    style={{
+                      fontFamily: '"Fira code", "Fira Mono", monospace',
+                      fontSize: 12,
+                      height: "400px",
+                    }}
+                  />
+                  <Button onClick={submitCode} endEnhancer={() => <Upload size={24} title="" />}>
+                    Submit
+                  </Button>
                 </Card>
               </Inner>
             </Cell>
             <Cell span={4}>
               <Inner>
                 <Card>
-                <Tabs
-                  onChange={({ activeKey }) => {
-                    setActiveKey(activeKey);
-                  }}
-                  activeKey={activeKey}
-                >
-                  <Tab title="Submission">
-                    <SubmissionTable></SubmissionTable>
-                  </Tab>
-                  <Tab title="Test Result">Content 2</Tab>
-                </Tabs>
+                  <Tabs
+                    onChange={({ activeKey }) => setActiveKey(activeKey)}
+                    activeKey={activeKey}
+                  >
+                    <Tab title="Submission">
+                      <SubmissionTable />
+                    </Tab>
+                    <Tab title="Test Result">Content 2</Tab>
+                  </Tabs>
                 </Card>
               </Inner>
             </Cell>
