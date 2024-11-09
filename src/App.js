@@ -212,12 +212,31 @@ function Login({ onLogin }) {
 
 function App() {
   const [userName, setUserName] = React.useState(null);
+  const [timer, setTimer] = React.useState(0);
+
+  // fn to set username and timer
+  const handleLogin = async (name) => {
+    setUserName(name);
+    // Call the backend to get the timer
+    try {
+      const response = await fetch(`http://ardagurcan.com:5000/session?username=${name}`);
+      const data = await response.json();
+      console.log("Response from backend:", data);
+      setTimer(data.timer);
+      // decrement the timer every second
+      const intervalId = setInterval(() => {
+        setTimer((prev) => prev - 1);
+      }, 1000);
+    } catch (error) {
+      console.error("Error fetching timer from backend:", error);
+    }
+  };
 
   return (
     // Move the providers here
     <StyletronProvider value={engine}>
       <BaseProvider theme={LightTheme}>
-        {userName ? <MainApp userName={userName} /> : <Login onLogin={setUserName} />}
+        {userName ? <MainApp userName={userName} /> : <Login onLogin={handleLogin} />}
       </BaseProvider>
     </StyletronProvider>
   );
