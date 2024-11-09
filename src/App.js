@@ -1,6 +1,6 @@
 // App.js
 import * as React from "react";
-import { useState } from 'react';
+import { useState } from "react";
 import Editor from "react-simple-code-editor";
 import { highlight, languages } from "prismjs/components/prism-core";
 import "prismjs/components/prism-clike";
@@ -12,7 +12,13 @@ import { Client as Styletron } from "styletron-engine-atomic";
 import { Provider as StyletronProvider } from "styletron-react";
 import { LightTheme, BaseProvider, styled } from "baseui";
 
-import { HeadingSmall, LabelMedium, MonoLabelXSmall, MonoParagraphSmall, ParagraphSmall } from "baseui/typography";
+import {
+  HeadingSmall,
+  LabelMedium,
+  MonoLabelXSmall,
+  MonoParagraphSmall,
+  ParagraphSmall,
+} from "baseui/typography";
 import { Heading, HeadingLevel, HeadingXSmall } from "baseui/heading";
 
 import { useStyletron } from "baseui";
@@ -27,13 +33,9 @@ import { Upload } from "baseui/icon";
 import SubmissionTable from "./SubmissionTable";
 import Leaderboard from "./Leaderboard"; // Import the Leaderboard component
 import Join from "./Join";
-import Markdown from 'react-markdown';
+import Markdown from "react-markdown";
 
-import {
-  Card,
-  StyledBody,
-  StyledAction
-} from "baseui/card";
+import { Card, StyledBody, StyledAction } from "baseui/card";
 
 const engine = new Styletron();
 
@@ -48,6 +50,7 @@ const itemProps = {
 function MainApp({ userName }) {
   const [code, setCode] = React.useState(``);
   const [activeKey, setActiveKey] = React.useState("0");
+  const [activeTest, setActiveTest] = React.useState("0");
 
   const [DATA, setData] = useState([]);
 
@@ -55,15 +58,24 @@ function MainApp({ userName }) {
     setData((prevData) => [...prevData, newItem]);
   }
 
+  const testResultTab = (rowIndex) => {
+    console.log("Test Result Tab");
+    console.log(String(rowIndex));
+    setActiveTest(1);  // Update activeTab as a string
+  };
+
   const [problem, setProblem] = React.useState(null);
 
   const getProblem = async () => {
     try {
       const params = new URLSearchParams({ q_id: 1 });
-      const response = await fetch(`http://ardagurcan.com:5000/problem?${params}`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" }
-      });
+      const response = await fetch(
+        `http://ardagurcan.com:5000/problem?${params}`,
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
       const data = await response.json();
       console.log("Response from backend:", data);
       setProblem(data);
@@ -120,13 +132,14 @@ function MainApp({ userName }) {
             </Card>
           </Inner>
         </Cell>
-        <Cell span={4}>
+        <Cell span={8}>
           <Inner>
             <Card>
               <Editor
                 value={code}
                 onValueChange={(code) => setCode(code)}
                 highlight={(code) => highlight(code, languages.python)}
+                onFocus={(e) => e.target.style.outline = 'none'} // Remove outline on focus
                 padding={10}
                 style={{
                   fontFamily: '"Fira code", "Fira Mono", monospace',
@@ -134,14 +147,13 @@ function MainApp({ userName }) {
                   height: "400px",
                 }}
               />
-              <Button onClick={submitCode} endEnhancer={() => <Upload size={24} title="" />}>
+              <Button
+                onClick={submitCode}
+                endEnhancer={() => <Upload size={24} title="" />}
+              >
                 Submit
               </Button>
             </Card>
-          </Inner>
-        </Cell>
-        <Cell span={4}>
-          <Inner>
             <Card>
               <Tabs
                 onChange={({ activeKey }) => {
@@ -152,12 +164,12 @@ function MainApp({ userName }) {
                 <Tab title="Submission">
                   <SubmissionTable data={DATA}></SubmissionTable>
                 </Tab>
-                <Tab title="Test Result">
-                  <ParagraphSmall>No test results available.</ParagraphSmall>
-                </Tab>
                 <Tab title="Leaderboard">
                   <Leaderboard refreshTrigger={refreshTrigger} />
                 </Tab>
+                
+                  
+               
               </Tabs>
             </Card>
           </Inner>
@@ -208,7 +220,6 @@ function Login({ onLogin }) {
     </div>
   );
 }
-
 
 function App() {
   const [userName, setUserName] = React.useState(null);
