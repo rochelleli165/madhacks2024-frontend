@@ -10,8 +10,8 @@ import { Client as Styletron } from "styletron-engine-atomic";
 import { Provider as StyletronProvider } from "styletron-react";
 import { LightTheme, BaseProvider, styled } from "baseui";
 
-import { ParagraphSmall } from "baseui/typography";
-import { Heading, HeadingLevel } from "baseui/heading";
+import { HeadingSmall, LabelMedium, MonoLabelXSmall, MonoParagraphSmall, ParagraphSmall } from "baseui/typography";
+import { Heading, HeadingLevel, HeadingXSmall} from "baseui/heading";
 
 import { useStyletron } from "baseui";
 import { Grid, Cell } from "baseui/layout-grid";
@@ -19,12 +19,27 @@ import { Grid, Cell } from "baseui/layout-grid";
 import { Tabs, Tab } from "baseui/tabs";
 
 import { Button } from "baseui/button";
-import { Upload, TriangleRight } from "baseui/icon";
+import { Upload } from "baseui/icon";
 
-import { StyledLink } from "baseui/link";
-import { Layer } from "baseui/layer";
-import { ChevronDown, Delete, Overflow } from "baseui/icon";
-import { AppNavBar, setItemActive } from "baseui/app-nav-bar";
+import TwoSum from "./TwoSum";
+import SubmissionTable from "./SubmissionTable";
+
+import {
+  Card,
+  StyledBody,
+  StyledAction
+} from "baseui/card";
+
+import {
+  StatefulDataTable,
+  CategoricalColumn,
+  CustomColumn,
+  NumericalColumn,
+  StringColumn,
+  COLUMNS,
+  NUMERICAL_FORMATS,
+} from "baseui/data-table";
+
 
 const engine = new Styletron();
 
@@ -38,50 +53,39 @@ const itemProps = {
 
 function App() {
   const [code, setCode] = React.useState(
-    `function add(a, b) {\n  return a + b;\n}`
+    `def twoSum(self, nums: List[int], target: int) -> List[int]:`
   );
   const [activeKey, setActiveKey] = React.useState("0");
 
-  const [mainItems, setMainItems] = React.useState([
-    { icon: Upload, label: "Primary A" },
-    { icon: Upload, label: "Primary B" },
-    {
-      icon: ChevronDown,
-      label: "Primary C",
-      navExitIcon: Delete,
-      children: [
-        { icon: Upload, label: "Secondary A" },
-        { icon: Upload, label: "Secondary B" },
-        { icon: Upload, label: "Secondary C" },
-        { icon: Upload, label: "Secondary D" },
-      ],
-    },
-    {
-      icon: ChevronDown,
-      label: "Primary D",
-      navExitIcon: Delete,
-      children: [
-        {
-          icon: ChevronDown,
-          label: "Secondary E",
-          children: [
-            { icon: Upload, label: "Tertiary A" },
-            { icon: Upload, label: "Tertiary B" },
-          ],
-        },
-        { icon: Upload, label: "Secondary F" },
-      ],
-    },
-  ]);
-  const [userItems, setUserItems] = React.useState([
-    { icon: Overflow, label: "Account item1" },
-    { icon: Overflow, label: "Account item2" },
-    { icon: Overflow, label: "Account item3" },
-    { icon: Overflow, label: "Account item4" },
-  ]);
-  function handleMainItemSelect(item) {
-    setMainItems((prev) => setItemActive(prev, item));
-  }
+  const DATA = [
+    ["Accepted", 11],
+    ["Accepted", 5],
+    ["Compile Error", 30],
+  ];
+  
+  const COLUMNS = ["Status", "Runtime"];
+
+  const submitCode = async () => {
+    try {
+      const params = new URLSearchParams({
+        q_id: 1,
+        code: encodeURIComponent(code),
+        f_name: encodeURIComponent("twoSum"),
+      })
+
+      const response = await fetch(`http://ardagurcan.com:5000/check?${params}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        }
+      });
+      const data = await response.json()
+      console.log('Response from backend:', data);
+    } catch (error) {
+      console.error('Error sending code to backend:', error);
+    }
+  };
+
   return (
     <StyletronProvider value={engine}>
       <BaseProvider theme={LightTheme}>
@@ -90,35 +94,20 @@ function App() {
           <Grid>
             <Cell span={4}>
               <Inner>
-                <HeadingLevel>
-                  <Heading>Two Sum</Heading>
-                  <ParagraphSmall>
-                    Given an array of integers nums and an integer target,
-                    return indices of the two numbers such that they add up to
-                    target. You may assume that each input would have exactly
-                    one solution, and you may not use the same element twice.
-                    You can return the answer in any order.
-                  </ParagraphSmall>
-
-                  <ParagraphSmall>
-                    Example 1: Input: nums = [2,7,11,15], target = 9 Output:
-                    [0,1] Explanation: Because nums[0] + nums[1] == 9, we return
-                    [0, 1]. Example 2: Input: nums = [3,2,4], target = 6 Output:
-                    [1,2] Example 3: Input: nums = [3,3], target = 6 Output:
-                    [0,1] Constraints: 2 &lt nums.length &lt 104 -109 &lt
-                    nums[i] ≤ 109 -109 &lt target &lt 109 Only one valid answer
-                    exists.
-                  </ParagraphSmall>
-                </HeadingLevel>
+                <Card>
+                <TwoSum />
+                </Card>
               </Inner>
             </Cell>
             <Cell span={4}>
               <Inner>
+                <Card>
                 <Editor
                   value={code}
                   onValueChange={(code) => setCode(code)}
                   highlight={(code) => highlight(code, languages.python)}
                   padding={10}
+                  onFocus={(e) => e.target.style.outline = 'none'} // Remove outline on focus
                   style={{
                     fontFamily: '"Fira code", "Fira Mono", monospace',
                     fontSize: 12,
@@ -126,27 +115,27 @@ function App() {
                     height: "400px", // Set the desired height
                   }}
                 />
-                <Button endEnhancer={() => <Upload size={24} title="" />}>
+                <Button onClick={submitCode} endEnhancer={() => <Upload size={24} title="" />}>
                   Submit
                 </Button>
-                <Button
-                  endEnhancer={() => <TriangleRight size={24} title="" />}
-                >
-                  Run
-                </Button>
+                </Card>
               </Inner>
             </Cell>
             <Cell span={4}>
               <Inner>
+                <Card>
                 <Tabs
                   onChange={({ activeKey }) => {
                     setActiveKey(activeKey);
                   }}
                   activeKey={activeKey}
                 >
-                  <Tab title="Testcase">Content 1</Tab>
+                  <Tab title="Submission">
+                    <SubmissionTable></SubmissionTable>
+                  </Tab>
                   <Tab title="Test Result">Content 2</Tab>
                 </Tabs>
+                </Card>
               </Inner>
             </Cell>
           </Grid>
