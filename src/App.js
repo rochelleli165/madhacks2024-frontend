@@ -1,3 +1,4 @@
+// App.js
 import * as React from "react";
 import { useState } from 'react';
 import Editor from "react-simple-code-editor";
@@ -24,10 +25,9 @@ import { Input } from "baseui/input";
 import { Upload } from "baseui/icon";
 
 import SubmissionTable from "./SubmissionTable";
+import Leaderboard from "./Leaderboard"; // Import the Leaderboard component
 import Join from "./Join";
 import Markdown from 'react-markdown';
-
-
 
 import {
   Card,
@@ -77,6 +77,9 @@ function MainApp({ userName }) {
     getProblem();
   }, []);
 
+  // Add refreshTrigger state
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
   const submitCode = async () => {
     try {
       const params = new URLSearchParams({
@@ -88,71 +91,79 @@ function MainApp({ userName }) {
 
       const response = await fetch(`http://ardagurcan.com:5000/check?${params}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" }
+        headers: { "Content-Type": "application/json" },
       });
       const data = await response.json();
-      console.log('Response from backend:', data);
+      console.log("Response from backend:", data);
       addItem(data);
-    
+
+      // Increment refreshTrigger to signal Leaderboard to refresh
+      setRefreshTrigger((prev) => prev + 1);
     } catch (error) {
       console.error("Error sending code to backend:", error);
     }
   };
+
   return (
-        <Outer>
-          <Grid>
-            <Cell span={4}>
-              <Inner>
-                <Card>
-                  <div>
-                    {problem ? (
-                      <Markdown>{problem.problem}</Markdown>
-                    ) : (
-                      <ParagraphSmall>Loading problem...</ParagraphSmall>
-                    )}
-                  </div>
-                </Card>
-              </Inner>
-            </Cell>
-            <Cell span={4}>
-              <Inner>
-                <Card>
-                  <Editor
-                    value={code}
-                    onValueChange={(code) => setCode(code)}
-                    highlight={(code) => highlight(code, languages.python)}
-                    padding={10}
-                    style={{
-                      fontFamily: '"Fira code", "Fira Mono", monospace',
-                      fontSize: 12,
-                      height: "400px",
-                    }}
-                  />
-                  <Button onClick={submitCode} endEnhancer={() => <Upload size={24} title="" />}>
-                    Submit
-                  </Button>
-                </Card>
-              </Inner>
-            </Cell>
-            <Cell span={4}>
-              <Inner>
-                <Card>
-                <Tabs
-                  onChange={({ activeKey }) => {
-                    setActiveKey(activeKey);
-                  }}
-                  activeKey={activeKey}
-                >
-                  <Tab title="Submission">
-                    <SubmissionTable data={DATA}></SubmissionTable>
-                  </Tab>
-                  <Tab title="Test Result">Content 2</Tab>
-                </Tabs>
-                </Card>
-              </Inner>
-            </Cell>
-          </Grid>
-        </Outer>
+    <Outer>
+      <Grid>
+        <Cell span={4}>
+          <Inner>
+            <Card>
+              <div>
+                {problem ? (
+                  <Markdown>{problem.problem}</Markdown>
+                ) : (
+                  <ParagraphSmall>Loading problem...</ParagraphSmall>
+                )}
+              </div>
+            </Card>
+          </Inner>
+        </Cell>
+        <Cell span={4}>
+          <Inner>
+            <Card>
+              <Editor
+                value={code}
+                onValueChange={(code) => setCode(code)}
+                highlight={(code) => highlight(code, languages.python)}
+                padding={10}
+                style={{
+                  fontFamily: '"Fira code", "Fira Mono", monospace',
+                  fontSize: 12,
+                  height: "400px",
+                }}
+              />
+              <Button onClick={submitCode} endEnhancer={() => <Upload size={24} title="" />}>
+                Submit
+              </Button>
+            </Card>
+          </Inner>
+        </Cell>
+        <Cell span={4}>
+          <Inner>
+            <Card>
+              <Tabs
+                onChange={({ activeKey }) => {
+                  setActiveKey(activeKey);
+                }}
+                activeKey={activeKey}
+              >
+                <Tab title="Submission">
+                  <SubmissionTable data={DATA}></SubmissionTable>
+                </Tab>
+                <Tab title="Test Result">
+                  <ParagraphSmall>No test results available.</ParagraphSmall>
+                </Tab>
+                <Tab title="Leaderboard">
+                  <Leaderboard refreshTrigger={refreshTrigger} />
+                </Tab>
+              </Tabs>
+            </Card>
+          </Inner>
+        </Cell>
+      </Grid>
+    </Outer>
   );
 }
 
@@ -229,11 +240,6 @@ const Inner = ({ children }) => {
   return (
     <div
       className={css({
-        //display: 'flex',
-        //justifyContent: 'center',
-        //alignItems: 'center',
-        //background: theme.colors.accent200,
-        //color: theme.colors.accent700,
         padding: ".25rem",
       })}
     >
