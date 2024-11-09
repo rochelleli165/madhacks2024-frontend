@@ -58,12 +58,6 @@ function MainApp({ userName }) {
     setData((prevData) => [...prevData, newItem]);
   }
 
-  const testResultTab = (rowIndex) => {
-    console.log("Test Result Tab");
-    console.log(String(rowIndex));
-    setActiveTest(1);  // Update activeTab as a string
-  };
-
   const [problem, setProblem] = React.useState(null);
 
   const getProblem = async () => {
@@ -117,6 +111,11 @@ function MainApp({ userName }) {
   };
 
   return (
+    <>
+    <HeadingLevel
+    >
+      <Heading>Time: {timer}</Heading>
+    </HeadingLevel>
     <Outer>
       <Grid>
         <Cell span={4}>
@@ -176,6 +175,7 @@ function MainApp({ userName }) {
         </Cell>
       </Grid>
     </Outer>
+    </>
   );
 }
 
