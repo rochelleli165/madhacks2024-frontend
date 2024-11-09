@@ -33,17 +33,6 @@ import {
   StyledAction
 } from "baseui/card";
 
-import {
-  StatefulDataTable,
-  CategoricalColumn,
-  CustomColumn,
-  NumericalColumn,
-  StringColumn,
-  COLUMNS,
-  NUMERICAL_FORMATS,
-} from "baseui/data-table";
-
-
 const engine = new Styletron();
 
 const itemProps = {
@@ -60,13 +49,11 @@ function App() {
   );
   const [activeKey, setActiveKey] = React.useState("0");
 
-  const DATA = [
-    ["Accepted", 11],
-    ["Accepted", 5],
-    ["Compile Error", 30],
-  ];
-  
-  const COLUMNS = ["Status", "Runtime"];
+  const [DATA, setData] = useState([]);
+
+  function addItem(newItem) {
+    setData((prevData) => [...prevData, newItem]);
+  }
 
   const [problem, setProblem] = React.useState(null);
 
@@ -96,8 +83,6 @@ function App() {
   }, []);
 
   const submitCode = async () => {
-    console.log(DATA)
-  
     try {
       const params = new URLSearchParams({
         q_id: 1,
