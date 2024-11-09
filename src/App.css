@@ -36,3 +36,9 @@
     transform: rotate(360deg);
   }
 }
+
+.center-container {
+  justify-content: center; /* Center horizontally */
+  align-items: center;     /* Center vertically */
+  box-sizing: border-box;  /* Include padding/border in width/height */
+}

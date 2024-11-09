@@ -19,28 +19,30 @@ function pseudoRandomString(rowIdx, columnIdx) {
   ).slice(0, 10);
 }
 
-function makeRowsFromColumns(columns, rowCount) {
+function transformData(columns, d) {
+    const data = d['data']
+  const rowCount = data.length;
   const rows = [];
   for (let i = 0; i < rowCount; i++) {
+    const error = data[i].error;
+    const n = data[i].n;
+    const result = data[i].result;
+    const runtime = data[i].runtime;
     rows.push({
       id: i,
       data: columns.map((column, j) => {
         switch (column.kind) {
             case COLUMNS.CUSTOM:
-                switch (i % 4) {
-                    case 0:
-                    return { color: "green" , status: "Accepted"};
-                    case 1:
-                    return { color: "red" , status: "Runtime Error"};
-                    case 2:
-                    return { color: "red" , status: "Compile Error"};
-                    case 3:
-                    return { color: "red" , status: "Rejected"};
+                switch (result) {
+                    case true:
+                        return { color: "green" , status: "Accepted"};
+                    case false:
+                        return { color: "red" , status: "Error"};
                     default:
-                    return { color: "red" , status: "F"};
+                        return { color: "red" , status: "Error"};
                 }
           case COLUMNS.STRING:
-                return i % 2 ? i - 1 : i + 3;
+                return Math.round(runtime * 1000 * 100) / 100;
           default:
             return "default" + pseudoRandomString(i, j);
         }
@@ -65,7 +67,6 @@ const columns = [
                 color: props.value.color
                 })}
             >
-              
                 <div>{props.value.status}</div>
             </div>
             );
@@ -78,13 +79,11 @@ const columns = [
   
 ];
 
-const rows = makeRowsFromColumns(columns, 5);
-
-export default function SubmissionTable() {
+export default function SubmissionTable(data) {
   const [css] = useStyletron();
   return (
     <div className={css({ height: "600px" })}>
-      <StatefulDataTable columns={columns} rows={rows} />
+      <StatefulDataTable columns={columns} rows={transformData(columns, data)} />
     </div>
   );
 }

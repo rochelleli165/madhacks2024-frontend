@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useState } from 'react';
 import Editor from "react-simple-code-editor";
 import { highlight, languages } from "prismjs/components/prism-core";
 import "prismjs/components/prism-clike";
@@ -23,6 +24,7 @@ import { Input } from "baseui/input";
 import { Upload } from "baseui/icon";
 
 import SubmissionTable from "./SubmissionTable";
+import Join from "./Join";
 import Markdown from 'react-markdown';
 
 
@@ -32,17 +34,6 @@ import {
   StyledBody,
   StyledAction
 } from "baseui/card";
-
-import {
-  StatefulDataTable,
-  CategoricalColumn,
-  CustomColumn,
-  NumericalColumn,
-  StringColumn,
-  COLUMNS,
-  NUMERICAL_FORMATS,
-} from "baseui/data-table";
-
 
 const engine = new Styletron();
 
@@ -57,6 +48,13 @@ const itemProps = {
 function MainApp({ userName }) {
   const [code, setCode] = React.useState(``);
   const [activeKey, setActiveKey] = React.useState("0");
+
+  const [DATA, setData] = useState([]);
+
+  function addItem(newItem) {
+    setData((prevData) => [...prevData, newItem]);
+  }
+
   const [problem, setProblem] = React.useState(null);
 
   const getProblem = async () => {
@@ -93,12 +91,13 @@ function MainApp({ userName }) {
         headers: { "Content-Type": "application/json" }
       });
       const data = await response.json();
-      console.log("Response from backend:", data);
+      console.log('Response from backend:', data);
+      addItem(data);
+    
     } catch (error) {
       console.error("Error sending code to backend:", error);
     }
   };
-
   return (
         <Outer>
           <Grid>
@@ -138,12 +137,17 @@ function MainApp({ userName }) {
             <Cell span={4}>
               <Inner>
                 <Card>
-                  <Tabs onChange={({ activeKey }) => setActiveKey(activeKey)} activeKey={activeKey}>
-                    <Tab title="Submission">
-                      <SubmissionTable />
-                    </Tab>
-                    <Tab title="Test Result">Content 2</Tab>
-                  </Tabs>
+                <Tabs
+                  onChange={({ activeKey }) => {
+                    setActiveKey(activeKey);
+                  }}
+                  activeKey={activeKey}
+                >
+                  <Tab title="Submission">
+                    <SubmissionTable data={DATA}></SubmissionTable>
+                  </Tab>
+                  <Tab title="Test Result">Content 2</Tab>
+                </Tabs>
                 </Card>
               </Inner>
             </Cell>
