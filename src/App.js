@@ -55,27 +55,109 @@ const Centered = styled("div", {
 });
 
 function MainApp({ userName, t }) {
+  const WAIT_TIME = 30; // 30 seconds
+
   const [code, setCode] = React.useState(``);
   const [activeKey, setActiveKey] = React.useState("0");
   const [activeTest, setActiveTest] = React.useState("0");
-  const [timer, setTimer] = React.useState(t);
-
   const [DATA, setData] = useState([]);
+  const [aliveStatus, setAliveStatus] = useState(true);
+  const [q_no, setQ_no] = useState(1);
+
+  const [timer, setTimer] = React.useState(t);
+  const [waitTimer, setWaitTimer] = React.useState(WAIT_TIME);
+
+  const codingTimerRef = React.useRef(null);
+  const waitTimerRef = React.useRef(null);
 
   function addItem(newItem) {
     setData((prevData) => [...prevData, newItem]);
   }
 
-  // decrement the timer every second
-  const intervalId = setInterval(() => {
-    setTimer((prev) => prev - 1);
-  }, 1000);
+  const getTimer = async () => {
+    try {
+      const response = await fetch(
+        `http://ardagurcan.com:5000/session`
+      );
+      const data = await response.json();
+      console.log("Response from backend:", data);
+      setTimer(data.timer);
+    } catch (error) {
+      console.error("Error fetching timer from backend:", error);
+    }
+  };
+  
+  // Effect to handle the Coding Timer
+  React.useEffect(() => {
+    // Reset the timer when q_no changes
+    getTimer();
+
+    // Start the coding timer
+    codingTimerRef.current = setInterval(() => {
+      setTimer(prevTimer => {
+        if (prevTimer <= 1) {
+          clearInterval(codingTimerRef.current);
+          // getAliveStatus();
+          return 0;
+        }
+        return prevTimer - 1;
+      });
+    }, 1000);
+
+    // Cleanup on unmount or when q_no changes
+    return () => clearInterval(codingTimerRef.current);
+  }, [q_no]);
+
+  // Effect to handle actions when Coding Timer reaches zero
+  React.useEffect(() => {
+    if (timer === 0) {
+      if (aliveStatus) {
+        // Start the wait timer
+        setWaitTimer(WAIT_TIME);
+        waitTimerRef.current = setInterval(() => {
+          setWaitTimer(prevWait => {
+            if (prevWait <= 1) {
+              clearInterval(waitTimerRef.current);
+              // Proceed to the next question
+              setQ_no(prevQ => prevQ + 1);
+              getProblem(q_no);
+              return 0;
+            }
+            return prevWait - 1;
+          });
+        }, 1000);
+      }
+    }
+  }, [timer, aliveStatus, q_no]);
+
+  // Cleanup wait timer on unmount
+  React.useEffect(() => {
+    return () => clearInterval(waitTimerRef.current);
+  }, []);
+
+  const getAliveStatus = async () => {
+    try {
+      const response = await fetch(
+        `http://ardagurcan.com:5000/check_alive`,
+        {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+      const data = await response.json();
+      console.log("Response from backend:", data);
+      // if user in alive users, set alive status to true
+      setAliveStatus(data.alive_users.includes(userName));
+    } catch (error) {
+      console.error("Error fetching problem from backend:", error);
+    }
+  };
 
   const [problem, setProblem] = React.useState(null);
 
-  const getProblem = async () => {
+  const getProblem = async (q_id) => {
     try {
-      const params = new URLSearchParams({ q_id: 1 });
+      const params = new URLSearchParams({ q_id: q_id || 1 });
       const response = await fetch(
         `http://ardagurcan.com:5000/problem?${params}`,
         {
@@ -93,7 +175,7 @@ function MainApp({ userName, t }) {
   };
 
   React.useEffect(() => {
-    getProblem();
+    getProblem(1);
   }, []);
   // Add refreshTrigger state
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -127,7 +209,7 @@ function MainApp({ userName, t }) {
 
   return (
     <>
-     <Centered>
+      <Centered>
         <HeadingLevel>
           <HeadingSmall>Time: {timer}</HeadingSmall>
         </HeadingLevel>
