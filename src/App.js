@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useState } from 'react';
 import Editor from "react-simple-code-editor";
 import { highlight, languages } from "prismjs/components/prism-core";
 import "prismjs/components/prism-clike";
@@ -22,6 +23,7 @@ import { Button } from "baseui/button";
 import { Upload } from "baseui/icon";
 
 import SubmissionTable from "./SubmissionTable";
+import Join from "./Join";
 import Markdown from 'react-markdown';
 
 
@@ -54,9 +56,18 @@ const itemProps = {
 
 function App() {
   const [code, setCode] = React.useState(
-    `def twoSum(self, nums: List[int], target: int) -> List[int]:`
+    `def twoSum(nums: List[int], target: int) -> List[int]:`
   );
   const [activeKey, setActiveKey] = React.useState("0");
+
+  const DATA = [
+    ["Accepted", 11],
+    ["Accepted", 5],
+    ["Compile Error", 30],
+  ];
+  
+  const COLUMNS = ["Status", "Runtime"];
+
   const [problem, setProblem] = React.useState(null);
 
   const getProblem = async () => {
@@ -85,6 +96,8 @@ function App() {
   }, []);
 
   const submitCode = async () => {
+    console.log(DATA)
+  
     try {
       const params = new URLSearchParams({
         q_id: 1,
@@ -100,11 +113,12 @@ function App() {
       });
       const data = await response.json();
       console.log('Response from backend:', data);
+      addItem(data);
+    
     } catch (error) {
       console.error('Error sending code to backend:', error);
     }
   };
-
   return (
     <StyletronProvider value={engine}>
       <BaseProvider theme={LightTheme}>
@@ -146,15 +160,17 @@ function App() {
             <Cell span={4}>
               <Inner>
                 <Card>
-                  <Tabs
-                    onChange={({ activeKey }) => setActiveKey(activeKey)}
-                    activeKey={activeKey}
-                  >
-                    <Tab title="Submission">
-                      <SubmissionTable />
-                    </Tab>
-                    <Tab title="Test Result">Content 2</Tab>
-                  </Tabs>
+                <Tabs
+                  onChange={({ activeKey }) => {
+                    setActiveKey(activeKey);
+                  }}
+                  activeKey={activeKey}
+                >
+                  <Tab title="Submission">
+                    <SubmissionTable data={DATA}></SubmissionTable>
+                  </Tab>
+                  <Tab title="Test Result">Content 2</Tab>
+                </Tabs>
                 </Card>
               </Inner>
             </Cell>
