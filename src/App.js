@@ -36,6 +36,7 @@ import Join from "./Join";
 import Markdown from "react-markdown";
 
 import { Card, StyledBody, StyledAction } from "baseui/card";
+import WaitingRoom from "./WaitingRoom";
 
 const engine = new Styletron();
 
@@ -226,16 +227,33 @@ function MainApp({ userName, t }) {
       console.error("Error sending code to backend:", error);
     }
   };
-  
 
+  const lines = code.split("\n").map((_, index) => index + 1);
 
   return (
-    <>
-      <Centered>
+    <div
+      style={{
+        backgroundColor: "#3f3f3f",
+      }}
+    >
+      <div
+        style={{
+          backgroundColor: "white",
+        }}
+      >
         <HeadingLevel>
-          <HeadingSmall>Time: {timer}</HeadingSmall>
+          <HeadingSmall
+            style={{
+              textAlign: "center",
+              justifyContent: "center",
+              alignContent: "center",
+              paddingBottom: "8px",
+            }}
+          >
+            Time: {timer}
+          </HeadingSmall>
         </HeadingLevel>
-      </Centered>
+      </div>
       <Outer>
         <Grid>
           <Cell span={4}>
@@ -254,18 +272,41 @@ function MainApp({ userName, t }) {
           <Cell span={8}>
             <Inner>
               <Card>
-                <Editor
-                  value={code}
-                  onValueChange={(code) => setCode(code)}
-                  highlight={(code) => highlight(code, languages.python)}
-                  onFocus={(e) => (e.target.style.outline = "none")} // Remove outline on focus
-                  padding={10}
-                  style={{
-                    fontFamily: '"Fira code", "Fira Mono", monospace',
-                    fontSize: 12,
-                    height: "400px",
-                  }}
-                />
+                <div style={{ width: '100%', height: "400px", overflow: "auto" }}>
+                  <div style={{ display: "flex", alignItems: "flex-start" }}>
+                    {/* Line numbers */}
+                    <div
+                      style={{
+                        padding: "10px",
+                        textAlign: "right",
+                        color: "#999",
+                      }}
+                    >
+                      {lines.map((lineNumber) => (
+                        <div
+                          style={{
+                            fontFamily: '"Fira code", "Fira Mono", monospace',
+                            fontSize: 12,
+                          }}
+                          key={lineNumber}
+                        >
+                          {lineNumber}
+                        </div>
+                      ))}
+                    </div>
+                    <Editor
+                      value={code}
+                      onValueChange={(code) => setCode(code)}
+                      highlight={(code) => highlight(code, languages.python)}
+                      onFocus={(e) => (e.target.style.outline = "none")} // Remove outline on focus
+                      padding={10}
+                      style={{
+                        fontFamily: '"Fira code", "Fira Mono", monospace',
+                        fontSize: 12,
+                      }}
+                    />
+                  </div>
+                </div>
                 <Button
                   onClick={submitCode}
                   endEnhancer={() => <Upload size={24} title="" />}
@@ -273,6 +314,12 @@ function MainApp({ userName, t }) {
                   Submit
                 </Button>
               </Card>
+              <div
+                style={
+                  // change padding bottom to 8px
+                  { paddingBottom: "12px" }
+                }
+              ></div>
               <Card>
                 <Tabs
                   onChange={({ activeKey }) => {
@@ -292,7 +339,7 @@ function MainApp({ userName, t }) {
           </Cell>
         </Grid>
       </Outer>
-    </>
+    </div>
   );
 }
 
@@ -308,6 +355,7 @@ function Login({ onLogin }) {
         justifyContent: "center",
         alignItems: "center",
         height: "100vh",
+        backgroundColor: "#3f3f3f",
       })}
     >
       <Card
@@ -393,7 +441,7 @@ const Inner = ({ children }) => {
   return (
     <div
       className={css({
-        padding: ".25rem",
+        padding: ".10rem",
       })}
     >
       {children}
