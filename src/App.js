@@ -54,6 +54,24 @@ const Centered = styled("div", {
   height: "100%",
 });
 
+/**
+ * Extracts the function name from a Python function definition string.
+ *
+ * @param {string} functionDef - The Python function definition line.
+ * @returns {string|null} - The extracted function name or null if not found.
+ */
+function getFunctionName(functionDef) {
+    // Regular expression to match Python function definition
+    const regex = /def\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/;
+
+    const match = functionDef.match(regex);
+    if (match && match[1]) {
+        return match[1];
+    }
+    return null; // Return null if no match is found
+}
+
+
 function MainApp({ userName, t }) {
   const [wsMessage, setWsMessage] = useState(null);
   const [socket, setSocket] = useState(null);
@@ -135,6 +153,8 @@ function MainApp({ userName, t }) {
   const [aliveStatus, setAliveStatus] = useState(true);
   const [q_no, setQ_no] = useState(1);
   const [isOpen, setIsOpen] = React.useState(false);
+  const [winStatus, setWinStatus] = React.useState(false);
+
   function close() {
     setIsOpen(false);
   }
@@ -165,24 +185,27 @@ function MainApp({ userName, t }) {
   }
 
   const getTimer = async () => {
-    if (q_no === 1) {
+    // if (q_no === 1) {
+    //   try {
+    //     const response = await fetch(
+    //       `http://${url}:${port}/session`
+    //     );
+    //     console.log("Call to session in gettimer")
+    //     const data = await response.json();
+    //     console.log("Response from backend:", data);
+    //     setTimer(data.timer);
+    //   } catch (error) {
+    //     console.error("Error fetching timer from backend (session):", error);
+    //   }
+    // } else
+    {
       try {
-        const response = await fetch(
-          `http://${url}:${port}/session`
-        );
-        const data = await response.json();
-        console.log("Response from backend:", data);
-        setTimer(data.timer);
-      } catch (error) {
-        console.error("Error fetching timer from backend (session):", error);
-      }
-    } else {
-      try {
-        const response = await fetch(`http://${url}:${port}/check_alive`, {
+        const response = await fetch(`http://${url}:${port}/timer`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
         });
         const data = await response.json();
+        console.log("Call to check_alive in gettimer");
         console.log("Response from backend:", data);
 
         setTimer(data.timer);
@@ -251,12 +274,23 @@ function MainApp({ userName, t }) {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
+      console.log("Call to check_alive in getAliveStatus")
       const data = await response.json();
       console.log("Response from backend:", data);
 
       const isAlive = data.users.includes(userName);
       setAliveStatus(isAlive);
       setTimer(data.timer);
+
+      // if only user alive, win
+      console.log("Users alive:", data.users);
+      console.log("Is user alive:", isAlive);
+      if (data.users.length === 1 && isAlive) {
+        console.log("User is the only one alive, they win!");
+        setWinStatus(true);
+        handle_disconnect(true);
+      }
+
 
       if (isAlive && !waitTimerRef.current) {
         console.log("User is alive, starting wait timer...");
@@ -315,7 +349,7 @@ function MainApp({ userName, t }) {
       const params = new URLSearchParams({
         q_id: q_no,
         code: encodeURIComponent(code),
-        f_name: encodeURIComponent("twoSum"),
+        f_name: encodeURIComponent(getFunctionName(code)),
         username: encodeURIComponent(userName),
       });
 
@@ -363,11 +397,14 @@ function MainApp({ userName, t }) {
     }
   };
 
-  const handle_disconnect = () => {
+  const handle_disconnect = (win = false) => {
 
     if (socket) {
       socket.emit("kill_user", { message: "Hello from frontend!", username: userName});
       socket.disconnect();
+    }
+    if (win) {
+      return WaitingRoom({ result: "Win" });
     }
     return WaitingRoom({ result: "Lose" });
   };
@@ -382,7 +419,7 @@ function MainApp({ userName, t }) {
     }, 10000); // 10000ms = 10 seconds
   };
 
-  return aliveStatus ? (
+  return !winStatus && aliveStatus ? (
     <div
       style={{
         backgroundColor: "#3f3f3f",
@@ -539,7 +576,7 @@ function MainApp({ userName, t }) {
         </Grid>
       </Outer>
     </div>
-  ) : (handle_disconnect());
+  ) : (handle_disconnect(winStatus));
 }
 
 function Login({ onLogin }) {
@@ -599,6 +636,7 @@ function App() {
       const response = await fetch(
         `http://${url}:${port}/session?username=${name}`
       );
+      console.log("Call to session in handleLogin")
       const data = await response.json();
       setTimer(data.timer);
       setUserName(name);
