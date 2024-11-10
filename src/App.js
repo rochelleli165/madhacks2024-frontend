@@ -43,7 +43,7 @@ import MysteryBox from "./MysteryItem";
 
 const engine = new Styletron();
 
-const url = "0.0.0.0";
+const url = "0.0.0.0"; // Need to also set in api
 const port = 6789;
 
 const Centered = styled("div", {
@@ -67,6 +67,7 @@ function MainApp({ userName, t }) {
     // Connection established
     socket.on("connect", () => {
       console.log("Connected to Socket.IO server");
+      socket.emit("new_user", { username: userName});
     });
 
     // Listen for 'message' events
@@ -91,6 +92,8 @@ function MainApp({ userName, t }) {
             bombCode();
             }, 6000);
             break;
+          default:
+            break;
         }
       }
       setWsMessage(message);
@@ -109,10 +112,12 @@ function MainApp({ userName, t }) {
 
     // Clean up the connection when the component unmounts
     return () => {
+      if (socket.readyState === WebSocket.OPEN) {
+        handle_disconnect()
+      }
       socket.disconnect();
     };
   }, []);
-  
 
   const [timer, setTimer] = React.useState(t);
 
@@ -123,7 +128,7 @@ function MainApp({ userName, t }) {
 
   const [code, setCode] = React.useState(``);
   const [activeKey, setActiveKey] = React.useState("0");
-  
+
   const [DATA, setData] = useState([]);
   const [aliveStatus, setAliveStatus] = useState(true);
   const [q_no, setQ_no] = useState(1);
@@ -167,7 +172,7 @@ function MainApp({ userName, t }) {
           headers: { "Content-Type": "application/json" },
         });
         const data = await response.json();
-        console.log("Response from backend:", data);  
+        console.log("Response from backend:", data);
 
         setTimer(data.timer);
       } catch (error) {
@@ -183,13 +188,13 @@ function MainApp({ userName, t }) {
   };
 
   useEffect(() => {
-    
+
     if (codingTimerRef.current) {
       clearInterval(codingTimerRef.current);
     }
-  
+
     getTimer(); // Reset the timer when q_no changes
-  
+
     codingTimerRef.current = setInterval(() => {
       setTimer((prevTimer) => {
         if (prevTimer <= 1) {
@@ -201,10 +206,10 @@ function MainApp({ userName, t }) {
         return prevTimer - 1;
       });
     }, 1000);
-  
+
     return () => clearInterval(codingTimerRef.current);
   }, [q_no]);
-  
+
   // React.useEffect(() => {
   //   if (timer === 0 && aliveStatus && !waitTimerRef.current) {
   //     console.log("User is alive, starting wait timer...");
@@ -237,11 +242,11 @@ function MainApp({ userName, t }) {
       });
       const data = await response.json();
       console.log("Response from backend:", data);
-  
+
       const isAlive = data.users.includes(userName);
       setAliveStatus(isAlive);
       setTimer(data.timer);
-  
+
       if (isAlive && !waitTimerRef.current) {
         console.log("User is alive, starting wait timer...");
         setWaitTimer(WAIT_TIME);
@@ -262,7 +267,7 @@ function MainApp({ userName, t }) {
       console.error("Error fetching problem from backend:", error);
     }
   };
-  
+
 
   const [problem, setProblem] = React.useState(null);
 
@@ -281,12 +286,12 @@ function MainApp({ userName, t }) {
       console.error("Error fetching problem from backend:", error);
     }
   };
-  
+
 
   useEffect(() => {
     getProblem(q_no);
   }, [q_no]);
-  
+
   // Add refreshTrigger state
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
@@ -302,7 +307,7 @@ function MainApp({ userName, t }) {
         f_name: encodeURIComponent("twoSum"),
         username: encodeURIComponent(userName),
       });
-  
+
       const response = await fetch(`http://${url}:${port}/check?${params}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -310,7 +315,7 @@ function MainApp({ userName, t }) {
       const data = await response.json();
       console.log("Response from backend:", data);
       addItem(data);
-  
+
       // Increment refreshTrigger to signal Leaderboard to refresh
       setRefreshTrigger((prev) => prev + 1);
     } catch (error) {
@@ -344,7 +349,13 @@ function MainApp({ userName, t }) {
     }
   };
 
-
+  const handle_disconnect = () => {
+    if (socket) {
+      socket.emit("kill_user", { message: "Hello from frontend!", username: userName});
+    }
+    socket.disconnect();
+    return WaitingRoom({ result: "Lose" });
+  };
 
   return aliveStatus ? (
     <div
@@ -361,7 +372,7 @@ function MainApp({ userName, t }) {
         onHide={() => setShowGifOverlay(false)}  // Callback to hide overlay after GIF disappears
       />
       )}
-       
+
       <div
         style={{
           backgroundColor: "white",
@@ -380,7 +391,7 @@ function MainApp({ userName, t }) {
           </HeadingSmall>
         </HeadingLevel>
       </div>
-      
+
       <Outer>
         <Grid>
           <Cell span={4}>
@@ -443,10 +454,10 @@ function MainApp({ userName, t }) {
                 >
                   Submit
                 </Button>
-                
-                
+
+
               </Card>
-              
+
               <div style={{ paddingBottom: "12px" }}></div>
               <Card>
                 <Tabs
@@ -468,7 +479,7 @@ function MainApp({ userName, t }) {
         </Grid>
       </Outer>
     </div>
-  ) : (WaitingRoom({ result: "Lose" }));
+  ) : (handle_disconnect());
 }
 
 function Login({ onLogin }) {

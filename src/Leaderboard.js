@@ -3,12 +3,15 @@ import React from 'react';
 import { TableBuilder, TableBuilderColumn } from 'baseui/table-semantic';
 import { ParagraphSmall } from 'baseui/typography';
 
+const url = "0.0.0.0"; // Need to also set in api
+const port = 6789;
+
 function Leaderboard({ refreshTrigger }) {
   const [data, setData] = React.useState([]);
 
   const fetchLeaderboard = async () => {
     try {
-      const response = await fetch('http://ardagurcan.com:5000/leaderboard');
+      const response = await fetch(`http://${url}:${port}/leaderboard`);
       const result = await response.json();
       // Sort data by time in ascending order
       result.sort((a, b) => a[1] - b[1]);
