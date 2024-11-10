@@ -11,6 +11,7 @@ import {
 
 import { Button } from "baseui/button";
 import { Input, SIZE } from "baseui/input/";
+import Markdown from "react-markdown";
 
 const url = "0.0.0.0";
 const port = 6789;
@@ -62,7 +63,7 @@ const ChatModal = () => {
       <div className="chat-window">
         {chatHistory.map((msg, index) => (
           <div key={index} className={`message ${msg.sender}`}>
-            {msg.message}
+             <Markdown>{msg.message}</Markdown>
           </div>
         ))}
       </div>
@@ -74,7 +75,7 @@ const ChatModal = () => {
           clearOnEscape
           onChange={handleInputChange}
         />
-        <div className="padding"></div>
+        <div style={{paddingBottom:'8px'}}></div>
         <Button>Submit</Button>
       </form>
     </main>
