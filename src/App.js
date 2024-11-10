@@ -62,7 +62,7 @@ function MainApp({ userName, t }) {
 
   React.useEffect(() => {
     // Initialize Socket.IO client
-    const socket = io("http://localhost:6789", {
+    const socket = io("http://ardagurcan.com:6789", {
       transports: ["websocket"], // Optional: Specify transport
     });
 
