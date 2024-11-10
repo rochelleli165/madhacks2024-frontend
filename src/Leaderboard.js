@@ -3,7 +3,7 @@ import React from 'react';
 import { TableBuilder, TableBuilderColumn } from 'baseui/table-semantic';
 import { ParagraphSmall } from 'baseui/typography';
 
-const url = "0.0.0.0"; // Need to also set in api
+const url = "ardagurcan.com"; // Need to also set in api
 const port = 6789;
 
 function Leaderboard({ refreshTrigger }) {

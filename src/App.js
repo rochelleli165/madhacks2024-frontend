@@ -44,7 +44,7 @@ import ChatModal from "./ChatModal";
 
 const engine = new Styletron();
 
-const url = "0.0.0.0"; // Need to also set in api
+const url = "ardagurcan.com"; // Need to also set in api
 const port = 6789;
 
 const Centered = styled("div", {

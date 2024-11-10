@@ -13,7 +13,7 @@ import { Button } from "baseui/button";
 import { Input, SIZE } from "baseui/input/";
 import Markdown from "react-markdown";
 
-const url = "0.0.0.0";
+const url = "ardagurcan.com";
 const port = 6789;
 
 const ChatModal = () => {
