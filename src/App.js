@@ -117,10 +117,7 @@ function MainApp({ userName, t }) {
 
     // Clean up the connection when the component unmounts
     return () => {
-      if (socket.readyState === WebSocket.OPEN) {
-        handle_disconnect()
-      }
-      socket.disconnect();
+      handle_disconnect()
     };
   }, []);
 
@@ -367,10 +364,11 @@ function MainApp({ userName, t }) {
   };
 
   const handle_disconnect = () => {
+
     if (socket) {
       socket.emit("kill_user", { message: "Hello from frontend!", username: userName});
+      socket.disconnect();
     }
-    socket.disconnect();
     return WaitingRoom({ result: "Lose" });
   };
 
