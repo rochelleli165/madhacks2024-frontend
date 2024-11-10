@@ -93,8 +93,6 @@ function MainApp({ userName, t }) {
             bombCode();
             }, 6000);
             break;
-          case 'star':
-            openModal();
         }
       }
       if (message['username'] == userName) {
