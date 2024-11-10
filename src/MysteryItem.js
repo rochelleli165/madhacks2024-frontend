@@ -6,6 +6,7 @@ const items = [
   '🦑', // Squid
   '💣', // Bomb
   '⚡', // Lightning Bolt
+  '⭐' // Star
 ];
 
 const MysteryBox = ({ onItemClick }) => {

@@ -40,6 +40,7 @@ import WaitingRoom from "./WaitingRoom";
 
 import io from "socket.io-client";
 import MysteryBox from "./MysteryItem";
+import ChatModal from "./ChatModal";
 
 const engine = new Styletron();
 
@@ -91,6 +92,14 @@ function MainApp({ userName, t }) {
             bombCode();
             }, 6000);
             break;
+          case 'star':
+            openModal();
+        }
+      }
+      if (message['username'] == userName) {
+        switch (message['action']){
+          case 'star':
+            openModal();
         }
       }
       setWsMessage(message);
@@ -127,17 +136,26 @@ function MainApp({ userName, t }) {
   const [DATA, setData] = useState([]);
   const [aliveStatus, setAliveStatus] = useState(true);
   const [q_no, setQ_no] = useState(1);
-
+  const [isOpen, setIsOpen] = React.useState(false);
+  function close() {
+    setIsOpen(false);
+  }
   const [codeSize, setCodeSize] = useState(12);
   const changeCodeSizeTemporarily = () => {
     setCodeSize(5);
     setTimeout(() => {
       setCodeSize(12);
-    }, 6000); // 10 seconds
+    }, 6000); 
   };
   const bombCode = () => {
     setCode(``);
   };
+  const bulletGemini = () => {
+    setIsOpen(true);
+    setTimeout(() => {
+      close();
+    }, 10000); // 10 seconds
+  }
 
   const [waitTimer, setWaitTimer] = React.useState(WAIT_TIME);
 
@@ -341,10 +359,21 @@ function MainApp({ userName, t }) {
       case "💣":
         sendMessageToBackend(userName, 'bomb')
         break;
+      case "⭐":
+        sendMessageToBackend(userName, 'star')
+        break;
     }
   };
 
+  const [showModal, setShowModal] = useState(false);
 
+  const openModal = () => {
+    setShowModal(true);
+    // Automatically close modal after 10 seconds
+    setTimeout(() => {
+      setShowModal(false);
+    }, 10000); // 10000ms = 10 seconds
+  };
 
   return aliveStatus ? (
     <div
@@ -360,8 +389,8 @@ function MainApp({ userName, t }) {
         duration={gifDuration}          // Duration in milliseconds for GIF to show
         onHide={() => setShowGifOverlay(false)}  // Callback to hide overlay after GIF disappears
       />
+
       )}
-       
       <div
         style={{
           backgroundColor: "white",
@@ -434,6 +463,7 @@ function MainApp({ userName, t }) {
                       }}
                     />
                     <MysteryBox onItemClick={handleItemUse} />
+                    
                     </div>
                   </div>
                 </div>
@@ -445,6 +475,16 @@ function MainApp({ userName, t }) {
                 </Button>
                 
                 
+                
+                {showModal && (
+                  <div className="modal">
+                    <div className="modal-content">
+                      <h2>Bullet Gemini</h2>
+                      <p>This modal will close after 10 seconds</p>
+                      <ChatModal/>
+                    </div>
+                  </div>
+                )}
               </Card>
               
               <div style={{ paddingBottom: "12px" }}></div>
