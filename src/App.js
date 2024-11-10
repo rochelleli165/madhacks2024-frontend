@@ -16,12 +16,9 @@ import { LightTheme, BaseProvider, styled } from "baseui";
 
 import {
   HeadingSmall,
-  LabelMedium,
-  MonoLabelXSmall,
-  MonoParagraphSmall,
   ParagraphSmall,
 } from "baseui/typography";
-import { Heading, HeadingLevel, HeadingXSmall } from "baseui/heading";
+import { HeadingLevel } from "baseui/heading";
 
 import { useStyletron } from "baseui";
 import { Grid, Cell } from "baseui/layout-grid";
@@ -38,10 +35,11 @@ import Join from "./Join";
 import Markdown from "react-markdown";
 import GifOverlay from "./GifOverlay";
 
-import { Card, StyledBody, StyledAction } from "baseui/card";
+import { Card } from "baseui/card";
 import WaitingRoom from "./WaitingRoom";
 
 import io from "socket.io-client";
+import MysteryBox from "./MysteryItem";
 
 const engine = new Styletron();
 
@@ -59,7 +57,7 @@ function MainApp({ userName, t }) {
   const [wsMessage, setWsMessage] = useState(null);
   const [socket, setSocket] = useState(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     // Initialize Socket.IO client
     const socket = io(`http://${url}:${port}`, {
       transports: ["websocket"], // Optional: Specify transport
@@ -77,13 +75,21 @@ function MainApp({ userName, t }) {
       if (message['username'] != userName) {
         switch (message['action']){
           case 'squid':
+            setGifSrc('./squid.gif');
+            setGifDuration(8300);
             showGif();
             break;
           case 'lightning':
             changeCodeSizeTemporarily();
             break;
           case 'bomb':
+            setGifSrc('./blue-shell.gif');
+            setGifDuration(8500);
+            showGif();
+            // sleep for a six seconds
+            setTimeout(() => {
             bombCode();
+            }, 6000);
             break;
         }
       }
@@ -110,7 +116,7 @@ function MainApp({ userName, t }) {
 
   const [timer, setTimer] = React.useState(t);
 
-  React.useEffect(() => {
+  useEffect(() => {
     setTimer(t);
   }, [t]);
   const WAIT_TIME = 10; // 30 seconds
@@ -176,7 +182,7 @@ function MainApp({ userName, t }) {
     }
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
     
     if (codingTimerRef.current) {
       clearInterval(codingTimerRef.current);
@@ -219,7 +225,7 @@ function MainApp({ userName, t }) {
   // }, [timer, aliveStatus]);
 
   // Cleanup wait timer on unmount
-  React.useEffect(() => {
+  useEffect(() => {
     return () => clearInterval(waitTimerRef.current);
   }, []);
 
@@ -277,7 +283,7 @@ function MainApp({ userName, t }) {
   };
   
 
-  React.useEffect(() => {
+  useEffect(() => {
     getProblem(q_no);
   }, [q_no]);
   
@@ -316,11 +322,28 @@ function MainApp({ userName, t }) {
 
 
   const [showGifOverlay, setShowGifOverlay] = useState(false);
+  const [gifSrc, setGifSrc] = useState("");
+  const [gifDuration, setGifDuration] = useState(0);
 
   // Function to show the GIF overlay when needed
   const showGif = () => {
     setShowGifOverlay(true);
   };
+
+  const handleItemUse = (item) => {
+    switch (item) {
+      case "🦑":
+        sendMessageToBackend(userName, 'squid')
+        break;
+      case "⚡":
+        sendMessageToBackend(userName, 'lightning')
+        break;
+      case "💣":
+        sendMessageToBackend(userName, 'bomb')
+        break;
+    }
+  };
+
 
 
   return aliveStatus ? (
@@ -333,11 +356,12 @@ function MainApp({ userName, t }) {
     >
       {showGifOverlay && (
         <GifOverlay
-        gifSrc="./squid.gif"  // Path to your GIF
-        duration={8200}          // Duration in milliseconds for GIF to show
+        gifSrc={gifSrc}  // Path to your GIF
+        duration={gifDuration}          // Duration in milliseconds for GIF to show
         onHide={() => setShowGifOverlay(false)}  // Callback to hide overlay after GIF disappears
       />
       )}
+       
       <div
         style={{
           backgroundColor: "white",
@@ -397,6 +421,7 @@ function MainApp({ userName, t }) {
                         </div>
                       ))}
                     </div>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end' }}> {/* Container */}
                     <Editor
                       value={code}
                       onValueChange={(code) => setCode(code)}
@@ -408,6 +433,8 @@ function MainApp({ userName, t }) {
                         fontSize: codeSize,
                       }}
                     />
+                    <MysteryBox onItemClick={handleItemUse} />
+                    </div>
                   </div>
                 </div>
                 <Button
@@ -416,16 +443,11 @@ function MainApp({ userName, t }) {
                 >
                   Submit
                 </Button>
-                <Button onClick={() => sendMessageToBackend(userName, 'squid')}>Show Ink</Button>
-                <Button onClick={() => sendMessageToBackend(userName, 'lightning')}>Small Code</Button>
-                <Button onClick={() => sendMessageToBackend(userName, 'bomb')}>Bomb</Button>
+                
+                
               </Card>
-              <div
-                style={
-                  // change padding bottom to 8px
-                  { paddingBottom: "12px" }
-                }
-              ></div>
+              
+              <div style={{ paddingBottom: "12px" }}></div>
               <Card>
                 <Tabs
                   onChange={({ activeKey }) => {
