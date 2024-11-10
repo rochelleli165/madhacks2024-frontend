@@ -54,6 +54,24 @@ const Centered = styled("div", {
   height: "100%",
 });
 
+/**
+ * Extracts the function name from a Python function definition string.
+ *
+ * @param {string} functionDef - The Python function definition line.
+ * @returns {string|null} - The extracted function name or null if not found.
+ */
+function getFunctionName(functionDef) {
+    // Regular expression to match Python function definition
+    const regex = /def\s+([A-Za-z_][A-Za-z0-9_]*)\s*\(/;
+
+    const match = functionDef.match(regex);
+    if (match && match[1]) {
+        return match[1];
+    }
+    return null; // Return null if no match is found
+}
+
+
 function MainApp({ userName, t }) {
   const [wsMessage, setWsMessage] = useState(null);
   const [socket, setSocket] = useState(null);
@@ -265,9 +283,12 @@ function MainApp({ userName, t }) {
       setTimer(data.timer);
 
       // if only user alive, win
-      if (data.users.length === 1 && data.users[0] === userName) {
+      console.log("Users alive:", data.users);
+      console.log("Is user alive:", isAlive);
+      if (data.users.length === 1 && isAlive) {
+        console.log("User is the only one alive, they win!");
         setWinStatus(true);
-        handle_disconnect();
+        handle_disconnect(true);
       }
 
 
@@ -328,7 +349,7 @@ function MainApp({ userName, t }) {
       const params = new URLSearchParams({
         q_id: q_no,
         code: encodeURIComponent(code),
-        f_name: encodeURIComponent("twoSum"),
+        f_name: encodeURIComponent(getFunctionName(code)),
         username: encodeURIComponent(userName),
       });
 
@@ -376,13 +397,13 @@ function MainApp({ userName, t }) {
     }
   };
 
-  const handle_disconnect = () => {
+  const handle_disconnect = (win = false) => {
 
     if (socket) {
       socket.emit("kill_user", { message: "Hello from frontend!", username: userName});
       socket.disconnect();
     }
-    if (winStatus) {
+    if (win) {
       return WaitingRoom({ result: "Win" });
     }
     return WaitingRoom({ result: "Lose" });
@@ -398,7 +419,7 @@ function MainApp({ userName, t }) {
     }, 10000); // 10000ms = 10 seconds
   };
 
-  return aliveStatus ? (
+  return !winStatus && aliveStatus ? (
     <div
       style={{
         backgroundColor: "#3f3f3f",
@@ -530,7 +551,7 @@ function MainApp({ userName, t }) {
         </Grid>
       </Outer>
     </div>
-  ) : (handle_disconnect());
+  ) : (handle_disconnect(winStatus));
 }
 
 function Login({ onLogin }) {
