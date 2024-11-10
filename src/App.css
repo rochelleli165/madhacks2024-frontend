@@ -1,5 +1,7 @@
 .App {
   text-align: center;
+  position: relative;
+  z-index: 1;
 }
 
 .App-logo {
@@ -41,4 +43,25 @@
   justify-content: center; /* Center horizontally */
   align-items: center;     /* Center vertically */
   box-sizing: border-box;  /* Include padding/border in width/height */
+}
+
+.gif-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 1.0;  /* Adjust the opacity as needed */
+  pointer-events: none;  /* Makes overlay non-interactive */
+  z-index: 9999;  /* Ensures it overlays all app content */
+}
+
+.gif-overlay img {
+  width: 100%;  /* Adjust size as needed */
+  height: auto;
+  object-fit: cover;
+
 }

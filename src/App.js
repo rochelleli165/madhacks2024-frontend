@@ -1,12 +1,14 @@
 // App.js
 import * as React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Editor from "react-simple-code-editor";
 import { highlight, languages } from "prismjs/components/prism-core";
 import "prismjs/components/prism-clike";
 import "prismjs/components/prism-javascript";
 import "prismjs/components/prism-python";
 import "prismjs/themes/prism.css"; //Example style, you can use another
+
+import "./App.css";
 
 import { Client as Styletron } from "styletron-engine-atomic";
 import { Provider as StyletronProvider } from "styletron-react";
@@ -34,6 +36,7 @@ import SubmissionTable from "./SubmissionTable";
 import Leaderboard from "./Leaderboard"; // Import the Leaderboard component
 import Join from "./Join";
 import Markdown from "react-markdown";
+import GifOverlay from "./GifOverlay";
 
 import { Card, StyledBody, StyledAction } from "baseui/card";
 import WaitingRoom from "./WaitingRoom";
@@ -41,6 +44,9 @@ import WaitingRoom from "./WaitingRoom";
 import io from "socket.io-client";
 
 const engine = new Styletron();
+
+const url = "http://0.0.0.0";
+const port = 6789;
 
 const itemProps = {
   backgroundColor: "mono300",
@@ -109,6 +115,17 @@ function MainApp({ userName, t }) {
   const [aliveStatus, setAliveStatus] = useState(true);
   const [q_no, setQ_no] = useState(1);
 
+  const [codeSize, setCodeSize] = useState(12);
+  const changeCodeSizeTemporarily = () => {
+    setCodeSize(5);
+    setTimeout(() => {
+      setCodeSize(12);
+    }, 6000); // 10 seconds
+  };
+  const bombCode = () => {
+    setCode(``);
+  };
+
   const [waitTimer, setWaitTimer] = React.useState(WAIT_TIME);
 
   const codingTimerRef = React.useRef(null);
@@ -122,7 +139,7 @@ function MainApp({ userName, t }) {
     if (q_no === 1) {
       try {
         const response = await fetch(
-          `http://ardagurcan.com:6789/session`
+          `http://${url}:${port}/session`
         );
         const data = await response.json();
         console.log("Response from backend:", data);
@@ -132,7 +149,7 @@ function MainApp({ userName, t }) {
       }
     } else {
       try {
-        const response = await fetch(`http://ardagurcan.com:6789/check_alive`, {
+        const response = await fetch(`http://${url}:${port}/check_alive`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
         });
@@ -169,7 +186,6 @@ function MainApp({ userName, t }) {
     return () => clearInterval(codingTimerRef.current);
   }, [q_no]);
   
-
   // React.useEffect(() => {
   //   if (timer === 0 && aliveStatus && !waitTimerRef.current) {
   //     console.log("User is alive, starting wait timer...");
@@ -196,7 +212,7 @@ function MainApp({ userName, t }) {
 
   const getAliveStatus = async () => {
     try {
-      const response = await fetch(`http://ardagurcan.com:6789/check_alive`, {
+      const response = await fetch(`http://${url}:${port}/check_alive`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
@@ -234,7 +250,7 @@ function MainApp({ userName, t }) {
   const getProblem = async (q_id) => {
     try {
       const params = new URLSearchParams({ q_id: q_id });
-      const response = await fetch(`http://ardagurcan.com:6789/problem?${params}`, {
+      const response = await fetch(`http://${url}:${port}/problem?${params}`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
@@ -268,7 +284,7 @@ function MainApp({ userName, t }) {
         username: encodeURIComponent(userName),
       });
   
-      const response = await fetch(`http://ardagurcan.com:6789/check?${params}`, {
+      const response = await fetch(`http://${url}:${port}/check?${params}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
@@ -285,12 +301,30 @@ function MainApp({ userName, t }) {
 
   const lines = code.split("\n").map((_, index) => index + 1);
 
+
+  const [showGifOverlay, setShowGifOverlay] = useState(false);
+
+  // Function to show the GIF overlay when needed
+  const showGif = () => {
+    setShowGifOverlay(true);
+  };
+
+
   return aliveStatus ? (
     <div
       style={{
         backgroundColor: "#3f3f3f",
+        position: 'relative',
+        zIndex: 1,
       }}
     >
+      {showGifOverlay && (
+        <GifOverlay
+        gifSrc="./squid.gif"  // Path to your GIF
+        duration={8200}          // Duration in milliseconds for GIF to show
+        onHide={() => setShowGifOverlay(false)}  // Callback to hide overlay after GIF disappears
+      />
+      )}
       <div
         style={{
           backgroundColor: "white",
@@ -371,7 +405,7 @@ function MainApp({ userName, t }) {
                       padding={10}
                       style={{
                         fontFamily: '"Fira code", "Fira Mono", monospace',
-                        fontSize: 12,
+                        fontSize: codeSize,
                       }}
                     />
                   </div>
@@ -382,6 +416,9 @@ function MainApp({ userName, t }) {
                 >
                   Submit
                 </Button>
+                <Button onClick={showGif}>Show Ink</Button>
+                <Button onClick={changeCodeSizeTemporarily}>Small Code</Button>
+                <Button onClick={bombCode}></Button>
               </Card>
               <div
                 style={
@@ -467,7 +504,7 @@ function App() {
     try {
       console.log("Fetching timer for user:", name);
       const response = await fetch(
-        `http://ardagurcan.com:6789/session?username=${name}`
+        `http://${url}:${port}/session?username=${name}`
       );
       const data = await response.json();
       setTimer(data.timer);
