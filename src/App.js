@@ -399,6 +399,31 @@ function MainApp({ userName, t }) {
 
       )}
 
+      <div>
+        {waitTimerRef.current > 0 && (
+          <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '100vh',
+              width: '100vw',
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.5)',
+              zIndex: 1000
+          }}>
+            <div style={{
+              textAlign: 'center',
+          }}>
+              <img style={{
+              borderRadius: '20px',
+              }} src="/loading.gif" alt="Description of GIF" width="300"/>
+            </div>
+          </div>
+        )}
+      </div>
+
       <div
         style={{
           backgroundColor: "white",
