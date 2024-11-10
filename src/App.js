@@ -138,6 +138,8 @@ function MainApp({ userName, t }) {
   const [aliveStatus, setAliveStatus] = useState(true);
   const [q_no, setQ_no] = useState(1);
   const [isOpen, setIsOpen] = React.useState(false);
+  const [winStatus, setWinStatus] = React.useState(false);
+
   function close() {
     setIsOpen(false);
   }
@@ -168,24 +170,27 @@ function MainApp({ userName, t }) {
   }
 
   const getTimer = async () => {
-    if (q_no === 1) {
+    // if (q_no === 1) {
+    //   try {
+    //     const response = await fetch(
+    //       `http://${url}:${port}/session`
+    //     );
+    //     console.log("Call to session in gettimer")
+    //     const data = await response.json();
+    //     console.log("Response from backend:", data);
+    //     setTimer(data.timer);
+    //   } catch (error) {
+    //     console.error("Error fetching timer from backend (session):", error);
+    //   }
+    // } else
+    {
       try {
-        const response = await fetch(
-          `http://${url}:${port}/session`
-        );
-        const data = await response.json();
-        console.log("Response from backend:", data);
-        setTimer(data.timer);
-      } catch (error) {
-        console.error("Error fetching timer from backend (session):", error);
-      }
-    } else {
-      try {
-        const response = await fetch(`http://${url}:${port}/check_alive`, {
+        const response = await fetch(`http://${url}:${port}/timer`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
         });
         const data = await response.json();
+        console.log("Call to check_alive in gettimer");
         console.log("Response from backend:", data);
 
         setTimer(data.timer);
@@ -254,12 +259,20 @@ function MainApp({ userName, t }) {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
+      console.log("Call to check_alive in getAliveStatus")
       const data = await response.json();
       console.log("Response from backend:", data);
 
       const isAlive = data.users.includes(userName);
       setAliveStatus(isAlive);
       setTimer(data.timer);
+
+      // if only user alive, win
+      if (data.users.length === 1 && data.users[0] === userName) {
+        setWinStatus(true);
+        handle_disconnect();
+      }
+
 
       if (isAlive && !waitTimerRef.current) {
         console.log("User is alive, starting wait timer...");
@@ -371,6 +384,9 @@ function MainApp({ userName, t }) {
       socket.emit("kill_user", { message: "Hello from frontend!", username: userName});
     }
     socket.disconnect();
+    if (winStatus) {
+      return WaitingRoom({ result: "Win" });
+    }
     return WaitingRoom({ result: "Lose" });
   };
 
@@ -576,6 +592,7 @@ function App() {
       const response = await fetch(
         `http://${url}:${port}/session?username=${name}`
       );
+      console.log("Call to session in handleLogin")
       const data = await response.json();
       setTimer(data.timer);
       setUserName(name);

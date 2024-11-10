@@ -27,17 +27,22 @@ const result = r['result']
         </div>
       </Centered>
     );
+  } else if (result == "Win") {
+    return (
+      <Centered>
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <HeadingLevel>
+            <HeadingSmall style={
+                {textAlign: "center"}
+            }>Game Over</HeadingSmall>
+            <HeadingXSmall style={
+                {textAlign: "center"}
+            }>You Win! Congratulations!</HeadingXSmall>
+          </HeadingLevel>
+        </div>
+      </Centered>
+    );
   }
-  return (
-    <Centered>
-      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-        <Leaderboard refreshTrigger={0}></Leaderboard>
-        <HeadingLevel>
-          <HeadingSmall>You survived! For now...</HeadingSmall>
-        </HeadingLevel>
-      </div>
-    </Centered>
-  );
 };
 
 export default WaitingRoom;
