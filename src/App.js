@@ -80,19 +80,35 @@ function MainApp({ userName, t }) {
   }
 
   const getTimer = async () => {
-    try {
-      const response = await fetch(
-        `http://ardagurcan.com:5000/session`
-      );
-      const data = await response.json();
-      console.log("Response from backend:", data);
-      setTimer(data.timer);
-    } catch (error) {
-      console.error("Error fetching timer from backend:", error);
+    if (q_no === 1) {
+      try {
+        const response = await fetch(
+          `http://ardagurcan.com:5000/session`
+        );
+        const data = await response.json();
+        console.log("Response from backend:", data);
+        setTimer(data.timer);
+      } catch (error) {
+        console.error("Error fetching timer from backend (session):", error);
+      }
+    } else {
+      try {
+        const response = await fetch(`http://ardagurcan.com:5000/check_alive`, {
+          method: "GET",
+          headers: { "Content-Type": "application/json" },
+        });
+        const data = await response.json();
+        console.log("Response from backend:", data);  
+
+        setTimer(data.timer);
+      } catch (error) {
+        console.error("Error fetching timer from backend (check_alive):", error);
+      }
     }
   };
 
   React.useEffect(() => {
+    
     if (codingTimerRef.current) {
       clearInterval(codingTimerRef.current);
     }
@@ -230,7 +246,7 @@ function MainApp({ userName, t }) {
 
   const lines = code.split("\n").map((_, index) => index + 1);
 
-  return (
+  return aliveStatus ? (
     <div
       style={{
         backgroundColor: "#3f3f3f",
@@ -340,7 +356,7 @@ function MainApp({ userName, t }) {
         </Grid>
       </Outer>
     </div>
-  );
+  ) : (WaitingRoom({ result: "Lose" }));
 }
 
 function Login({ onLogin }) {
@@ -396,6 +412,7 @@ function App() {
   const handleLogin = async (name) => {
     setIsLoading(true);
     try {
+      console.log("Fetching timer for user:", name);
       const response = await fetch(
         `http://ardagurcan.com:5000/session?username=${name}`
       );
