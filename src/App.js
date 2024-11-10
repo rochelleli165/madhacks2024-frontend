@@ -45,16 +45,8 @@ import io from "socket.io-client";
 
 const engine = new Styletron();
 
-const url = "http://0.0.0.0";
+const url = "0.0.0.0";
 const port = 6789;
-
-const itemProps = {
-  backgroundColor: "mono300",
-  height: "scale1000",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-};
 
 const Centered = styled("div", {
   display: "flex",
@@ -65,12 +57,14 @@ const Centered = styled("div", {
 
 function MainApp({ userName, t }) {
   const [wsMessage, setWsMessage] = useState(null);
+  const [socket, setSocket] = useState(null);
 
   React.useEffect(() => {
     // Initialize Socket.IO client
-    const socket = io("http://ardagurcan.com:6789", {
+    const socket = io(`http://${url}:${port}`, {
       transports: ["websocket"], // Optional: Specify transport
     });
+    setSocket(socket);
 
     // Connection established
     socket.on("connect", () => {
@@ -80,6 +74,19 @@ function MainApp({ userName, t }) {
     // Listen for 'message' events
     socket.on("message", (message) => {
       console.log("Received message:", message);
+      if (message['username'] != userName) {
+        switch (message['action']){
+          case 'squid':
+            showGif();
+            break;
+          case 'lightning':
+            changeCodeSizeTemporarily();
+            break;
+          case 'bomb':
+            bombCode();
+            break;
+        }
+      }
       setWsMessage(message);
       // Handle the message as needed
     });
@@ -110,7 +117,7 @@ function MainApp({ userName, t }) {
 
   const [code, setCode] = React.useState(``);
   const [activeKey, setActiveKey] = React.useState("0");
-  const [activeTest, setActiveTest] = React.useState("0");
+  
   const [DATA, setData] = useState([]);
   const [aliveStatus, setAliveStatus] = useState(true);
   const [q_no, setQ_no] = useState(1);
@@ -160,6 +167,12 @@ function MainApp({ userName, t }) {
       } catch (error) {
         console.error("Error fetching timer from backend (check_alive):", error);
       }
+    }
+  };
+
+  const sendMessageToBackend = (username, action) => {
+    if (socket) {
+      socket.emit("frontend_message", { message: "Hello from frontend!", username: username, action: action });
     }
   };
 
@@ -343,20 +356,7 @@ function MainApp({ userName, t }) {
           </HeadingSmall>
         </HeadingLevel>
       </div>
-      {/* Display WebSocket message */}
-      {wsMessage && (
-        <div
-          style={{
-            backgroundColor: "#f0f0f0",
-            padding: "10px",
-            margin: "10px",
-            textAlign: "center",
-          }}
-        >
-          <strong>WebSocket Message:</strong> {wsMessage.message} (Value:{" "}
-          {wsMessage.value})
-        </div>
-      )}
+      
       <Outer>
         <Grid>
           <Cell span={4}>
@@ -416,9 +416,9 @@ function MainApp({ userName, t }) {
                 >
                   Submit
                 </Button>
-                <Button onClick={showGif}>Show Ink</Button>
-                <Button onClick={changeCodeSizeTemporarily}>Small Code</Button>
-                <Button onClick={bombCode}></Button>
+                <Button onClick={() => sendMessageToBackend(userName, 'squid')}>Show Ink</Button>
+                <Button onClick={() => sendMessageToBackend(userName, 'lightning')}>Small Code</Button>
+                <Button onClick={() => sendMessageToBackend(userName, 'bomb')}>Bomb</Button>
               </Card>
               <div
                 style={
