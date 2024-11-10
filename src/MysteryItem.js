@@ -42,7 +42,7 @@ const MysteryBox = ({ onItemClick }) => {
         if (timeoutId) clearTimeout(timeoutId); // Clear previous timeout if any
         const newTimeoutId = setTimeout(() => {
           startRolling(); // Start rolling again after 120 seconds
-        }, 120000); // 120 seconds (120000ms)
+        }, 30000); // 120 seconds (120000ms)
         setTimeoutId(newTimeoutId);
       }
     };
