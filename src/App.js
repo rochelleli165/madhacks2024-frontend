@@ -38,6 +38,8 @@ import Markdown from "react-markdown";
 import { Card, StyledBody, StyledAction } from "baseui/card";
 import WaitingRoom from "./WaitingRoom";
 
+import io from "socket.io-client";
+
 const engine = new Styletron();
 
 const itemProps = {
@@ -56,6 +58,43 @@ const Centered = styled("div", {
 });
 
 function MainApp({ userName, t }) {
+  const [wsMessage, setWsMessage] = useState(null);
+
+  React.useEffect(() => {
+    // Initialize Socket.IO client
+    const socket = io("http://localhost:6789", {
+      transports: ["websocket"], // Optional: Specify transport
+    });
+
+    // Connection established
+    socket.on("connect", () => {
+      console.log("Connected to Socket.IO server");
+    });
+
+    // Listen for 'message' events
+    socket.on("message", (message) => {
+      console.log("Received message:", message);
+      setWsMessage(message);
+      // Handle the message as needed
+    });
+
+    // Handle disconnection
+    socket.on("disconnect", () => {
+      console.log("Socket.IO connection closed");
+    });
+
+    // Handle errors
+    socket.on("error", (error) => {
+      console.error("Socket.IO error:", error);
+    });
+
+    // Clean up the connection when the component unmounts
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+  
+
   const [timer, setTimer] = React.useState(t);
 
   React.useEffect(() => {
@@ -83,7 +122,7 @@ function MainApp({ userName, t }) {
     if (q_no === 1) {
       try {
         const response = await fetch(
-          `http://ardagurcan.com:5000/session`
+          `http://ardagurcan.com:6789/session`
         );
         const data = await response.json();
         console.log("Response from backend:", data);
@@ -93,7 +132,7 @@ function MainApp({ userName, t }) {
       }
     } else {
       try {
-        const response = await fetch(`http://ardagurcan.com:5000/check_alive`, {
+        const response = await fetch(`http://ardagurcan.com:6789/check_alive`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
         });
@@ -157,7 +196,7 @@ function MainApp({ userName, t }) {
 
   const getAliveStatus = async () => {
     try {
-      const response = await fetch(`http://ardagurcan.com:5000/check_alive`, {
+      const response = await fetch(`http://ardagurcan.com:6789/check_alive`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
@@ -195,7 +234,7 @@ function MainApp({ userName, t }) {
   const getProblem = async (q_id) => {
     try {
       const params = new URLSearchParams({ q_id: q_id });
-      const response = await fetch(`http://ardagurcan.com:5000/problem?${params}`, {
+      const response = await fetch(`http://ardagurcan.com:6789/problem?${params}`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
@@ -229,7 +268,7 @@ function MainApp({ userName, t }) {
         username: encodeURIComponent(userName),
       });
   
-      const response = await fetch(`http://ardagurcan.com:5000/check?${params}`, {
+      const response = await fetch(`http://ardagurcan.com:6789/check?${params}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
@@ -270,6 +309,20 @@ function MainApp({ userName, t }) {
           </HeadingSmall>
         </HeadingLevel>
       </div>
+      {/* Display WebSocket message */}
+      {wsMessage && (
+        <div
+          style={{
+            backgroundColor: "#f0f0f0",
+            padding: "10px",
+            margin: "10px",
+            textAlign: "center",
+          }}
+        >
+          <strong>WebSocket Message:</strong> {wsMessage.message} (Value:{" "}
+          {wsMessage.value})
+        </div>
+      )}
       <Outer>
         <Grid>
           <Cell span={4}>
@@ -414,7 +467,7 @@ function App() {
     try {
       console.log("Fetching timer for user:", name);
       const response = await fetch(
-        `http://ardagurcan.com:5000/session?username=${name}`
+        `http://ardagurcan.com:6789/session?username=${name}`
       );
       const data = await response.json();
       setTimer(data.timer);
